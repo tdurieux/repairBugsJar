@@ -1,0 +1,17 @@
+{
+	"Repair Patterns": {
+		"Other": {
+			"singleLine": {
+				"name": "Single Line"
+			}
+		}
+	},
+	"Runtime Information": {
+		"Automatic Repair": {
+			"rtElixir": {
+				"name": "Elixir",
+				"fullname": "Fix with Elixir"
+			}
+		}
+	}
+}

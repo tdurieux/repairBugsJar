@@ -1,0 +1,10 @@
+---
+BugID: MNG-5742
+Summary: inconsistent classloading for extensions=true plugins
+Description: 'Maven creates two class realms for build extensions plugins. One realm
+  is used to contribute core extensions and the other to execute plugins goals. The
+  two realms have slightly different classpath, with extensions realm not "seeing"
+  classes from other extensions and not resolving reactor dependencies. The two realms
+  are mostly independent and have duplicate copies of components, including duplicate
+  copies of singletons. This results in multiple invocation of singleton components
+  in some cases. This also results inconsistent/unexpected component wiring. '

@@ -1,0 +1,13 @@
+---
+BugID: OAK-93
+Summary: Tree has wrong parent after move
+Description: |-
+  After a move operation Tree.getParent() still returns the old parent.
+
+  {code}
+  Tree x = r.getChild("x");
+  Tree y = r.getChild("y");
+
+  root.move("x", "y/x");
+  assertEquals("y", x.getParent().getName());  // Fails
+  {code}

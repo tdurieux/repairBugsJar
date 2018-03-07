@@ -1,0 +1,12 @@
+---
+BugID: MATH-996
+Summary: Fraction specified with maxDenominator and a value very close to a simple
+  fraction should not throw an overflow exception
+Description: |-
+  An overflow exception is thrown when a Fraction is initialized with a maxDenominator from a double that is very close to a simple
+  fraction.  For example:
+
+  double d = 0.5000000001;
+  Fraction f = new Fraction(d, 10);
+
+  Patch with unit test on way.

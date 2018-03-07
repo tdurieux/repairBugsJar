@@ -1,0 +1,231 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Syntax:
+# * lines starting with "#" are remarks.
+# * lines starting with "select" are queries, followed by expected results and an empty line
+# * lines starting with "explain" are followed by expected query plan and an empty line
+# * all other lines are are committed into the microkernel (line by line)
+# * new tests are typically be added on top, after the syntax docs
+# * use ascii character only
+
+# test the property content index
+
+commit / + "test": { "a": { "id": "10" }, "b": { "id" : "20" }}
+commit /jcr:system/indexes + "property:id": {}
+
+explain select * from [nt:base] where id = '10'
+nt:base AS nt:base /* propertyIndex "id [10..10]" */
+
+select * from [nt:base] where id = '10'
+/test/a
+
+select [jcr:path], * from [nt:base] where id = '10'
+/test/a, null
+
+explain select * from [nt:base] where id > '10'
+nt:base AS nt:base /* traverse "//*" */
+
+commit / - "test"
+commit /jcr:system/indexes - "property:id"
+
+# other tests
+
+commit / + "test": { "jcr:resource": {}, "resource": { "x" : {}}}
+
+select * from [nt:base] where id = -1
+
+explain select * from [nt:base] as b where ischildnode(b, '/test')
+nt:base AS b /* traverse "/test/*" */
+
+explain select * from [nt:base] as b where isdescendantnode(b, '/test')
+nt:base AS b /* traverse "/test//*" */
+
+select * from [nt:base] as b where ischildnode(b, '/test')
+/test/jcr:resource
+/test/resource
+
+select * from [nt:base] as b where issamenode(b, '/test')
+/test
+
+select * from [nt:base] where name() = 'resource'
+/test/resource
+
+select * from [nt:base] as b where localname(b) = 'resource'
+/test/jcr:resource
+/test/resource
+
+select * from [nt:base] as x where isdescendantnode(x, '/')
+/
+/jcr:system
+/jcr:system/indexes
+/test
+/test/jcr:resource
+/test/resource
+/test/resource/x
+
+commit / - "test"
+
+commit / + "parents": { "p0": {"id": "0"}, "p1": {"id": "1"}, "p2": {"id": "2"}}
+commit / + "children": { "c1": {"p": "1"}, "c2": {"p": "1"}, "c3": {"p": "2"}, "c4": {"p": "3"}}
+
+# relative property
+select * from [nt:base] where [c1/p] = '1'
+/children
+
+select * from [nt:base] as p where p.[jcr:path] = '/parents'
+/parents
+
+select * from [nt:base] as p inner join [nt:base] as p2 on ischildnode(p2, p) where p.[jcr:path] = '/'
+/, /children
+/, /jcr:system
+/, /parents
+
+select * from [nt:base] as p inner join [nt:base] as p2 on isdescendantnode(p2, p) where p.[jcr:path] = '/parents'
+/parents, /parents/p0
+/parents, /parents/p1
+/parents, /parents/p2
+
+select * from [nt:base] as p inner join [nt:base] as p2 on issamenode(p2, p) where p.[jcr:path] = '/parents'
+/parents, /parents
+
+select id from [nt:base] where id is not null
+0
+1
+2
+
+select id from [nt:base] where id is not null order by id desc
+2
+1
+0
+
+select * from [nt:base] as c right outer join [nt:base] as p on p.id = c.p where p.id is not null
+/children/c1, /parents/p1
+/children/c2, /parents/p1
+/children/c3, /parents/p2
+null, /parents/p0
+
+select * from [nt:base] as p left outer join [nt:base] as c on p.id = c.p where p.id is not null
+/parents/p0, null
+/parents/p1, /children/c1
+/parents/p1, /children/c2
+/parents/p2, /children/c3
+
+select * from [nt:base] as p left outer join [nt:base] as c on p.id = c.p where p.id is not null and c.p is null
+/parents/p0, null
+
+select * from [nt:base] as p left outer join [nt:base] as c on p.id = c.p where p.id is not null and c.p is not null
+/parents/p1, /children/c1
+/parents/p1, /children/c2
+/parents/p2, /children/c3
+
+select * from [nt:base] as p inner join [nt:base] as c on p.id = c.p
+/parents/p1, /children/c1
+/parents/p1, /children/c2
+/parents/p2, /children/c3
+
+explain select * from [nt:base] as p inner join [nt:base] as c on p.id = c.p
+nt:base AS p /* traverse "//*" */ INNER JOIN nt:base AS c /* traverse "//*" */
+
+commit / - "parents"
+commit / - "children"
+
+commit / + "test": { "hello": { "x": "1" }, "world": { "x": "2" } }
+commit / + "test2": { "id":"1", "x": "2" }
+
+select * from [nt:base]
+/
+/jcr:system
+/jcr:system/indexes
+/test
+/test/hello
+/test/world
+/test2
+
+select * from [nt:base] where id = '1'
+/test2
+
+select * from [nt:base] where id = '1' and x = '2'
+/test2
+
+select * from [nt:base] where id = '1' or x = '2'
+/test/world
+/test2
+
+select * from [nt:base] where not (id = '1' or x = '2')
+/
+/jcr:system
+/jcr:system/indexes
+/test
+/test/hello
+
+select * from [nt:base] where x is null
+/
+/jcr:system
+/jcr:system/indexes
+/test
+
+commit / - "test"
+commit / - "test2"
+
+commit / + "test": { "name": "hello" }
+commit / + "test2": { "name": "World!" }
+commit / + "test3": { "name": "Hallo" }
+commit / + "test4": { "name": "10%" }
+commit / + "test5": { "name": "10 percent" }
+
+select name from [nt:base] order by upper(name)
+10 percent
+10%
+Hallo
+hello
+World!
+null
+null
+null
+
+select * from [nt:base] where length(name) = 5
+/test
+/test3
+
+select * from [nt:base] where upper(name) = 'HELLO'
+/test
+
+select * from [nt:base] where lower(name) = 'world!'
+/test2
+
+select * from [nt:base] where name like 'W%'
+/test2
+
+select * from [nt:base] where name like '%o_%'
+/test2
+
+select * from [nt:base] where name like '__llo'
+/test
+/test3
+
+select * from [nt:base] where upper(name) like 'H_LLO'
+/test
+/test3
+
+select * from [nt:base] where upper(name) like 'H\_LLO'
+
+select * from [nt:base] where upper(name) like '10%'
+/test4
+/test5
+
+select * from [nt:base] where upper(name) like '10\%'
+/test4
+

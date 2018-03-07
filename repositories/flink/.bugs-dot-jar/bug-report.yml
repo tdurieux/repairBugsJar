@@ -1,0 +1,7 @@
+---
+BugID: FLINK-996
+Summary: NullPointerException while translating union node
+Description: The NepheleJobGraphGenerator throws a NullPointerException when translating
+  a binary union operator. The BinaryUnionPlanNode is not replaced by a NAryUnionPlanNode
+  and thus is still treated as a DualInputVertex. Accessing the driver code of the
+  BinaryUnionPlanNode causes then the NullPointerException.

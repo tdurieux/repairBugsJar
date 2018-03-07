@@ -1,0 +1,15 @@
+---
+BugID: LOG4J2-991
+Summary: Async root logger config is defaulting includeLocation to true without use
+  of Log4jContextSelector system property
+Description: I'm using the approach detailed here - https://logging.apache.org/log4j/2.x/manual/async.html
+  - under "Mixing Synchronous and Asynchronous Loggers" where we have the <asyncRoot>
+  logger defined. I noticed this was slow so looked into it and noticed the location
+  was being captured but I thought this should default to false for async loggers.
+  Looking into this, the line here - https://github.com/apache/logging-log4j2/blob/master/log4j-core/src/main/java/org/apache/logging/log4j/core/async/AsyncLoggerConfig.java#L239
+  - the call to includeLocation() is actually calling LoggerConfig.includeLocation()
+  which checks for the existence of the system property (which we don't have set),
+  therefore include location defaults to true. I think instead it should be calling
+  the includeLocation() static method inside of AsyncLoggerConfig here - https://github.com/apache/logging-log4j2/blob/master/log4j-core/src/main/java/org/apache/logging/log4j/core/async/AsyncLoggerConfig.java#L204
+  - which would end up defaulting this to false correctly as the includeLocation value
+  is actually null since I didn't explicitly configured it.
