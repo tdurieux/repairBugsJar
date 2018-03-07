@@ -1,0 +1,51 @@
+---
+BugID: ACCUMULO-907
+Summary: stacking combiners produces a strange result
+Description: |+
+  Paste the following into your shell:
+
+  {noformat}
+  deletetable test
+  createtable test
+  setiter -t test -p 16 -scan -n test_1 -class org.apache.accumulo.core.iterators.user.SummingCombiner
+
+  count:a
+
+  STRING
+  setiter -t test -p 17 -scan -n test_2 -class org.apache.accumulo.core.iterators.user.SummingCombiner
+
+  count:a
+
+  STRING
+  setiter -t test -p 18 -scan -n test_3 -class org.apache.accumulo.core.iterators.user.SummingCombiner
+
+  count:a
+
+  STRING
+  setiter -t test -p 10 -scan -n test_4 -class org.apache.accumulo.core.iterators.user.SummingCombiner
+
+  count
+
+  STRING
+  insert row count a 1
+  insert row count a 1
+  insert row count b 1
+  insert row count b 1
+  insert row count b 1
+  insert row count c 1
+  scan
+  {noformat}
+
+  I expect:
+
+  {noformat}
+  row count:a []    2
+  row count:b []    3
+  row count:c []    1
+  {noformat}
+
+  But instead, I get this:
+  {noformat}
+  row count:a []    12
+  {noformat}
+
