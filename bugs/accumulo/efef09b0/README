@@ -1,0 +1,307 @@
+******************************************************************************
+0. Introduction
+
+Apache Accumulo is a sorted, distributed key/value store based on Google's 
+BigTable design. It is built on top of Apache Hadoop, Zookeeper, and Thrift. It 
+features a few novel improvements on the BigTable design in the form of 
+cell-level access labels and a server-side programming mechanism that can modify
+key/value pairs at various points in the data management process.
+
+******************************************************************************
+1. Building
+
+In the normal tarball or RPM release of accumulo, everything is built and
+ready to go on x86 GNU/Linux: there is no build step.
+
+However, if you only have source code, or you wish to make changes, you need to
+have maven configured to get Accumulo prerequisites from repositories.  See
+the pom.xml file for the necessary components. Activate the 'docs' profile to build
+the Accumulo developer and user manual.
+
+Run "mvn package -P assemble" to build a distribution, or run 
+"mvn package -P assemble,docs" to also build the documentation. By default, 
+Accumulo compiles against Hadoop 1.0.4.  To compile against a different version
+that is compatible with Hadoop 1.0, specify hadoop.version on the command line,
+e.g. "-Dhadoop.version=0.20.205.0" or "-Dhadoop.version=1.1.0".  To compile 
+against Hadoop 2.0, specify "-Dhadoop.profile=2.0".  By default this uses
+2.0.2-alpha.  To compile against a different 2.0-compatible version, specify
+the profile and version, e.g. "-Dhadoop.profile=2.0 -Dhadoop.version=0.23.5".
+
+If you are running on another Unix-like operating system (OSX, etc) then
+you may wish to build the native libraries.  They are not strictly necessary
+but having them available suppresses a runtime warning:
+
+  $ ( cd ./src/server/src/main/c++ ; make )
+
+If you want to build the debian release, use the command "mvn install -Pdeb" to 
+generate the .deb files in the target/ directory. Please follow the steps at 
+https://cwiki.apache.org/BIGTOP/how-to-install-hadoop-distribution-from-bigtop.html
+to add bigtop to your debian sources list. This will make it substantially
+easier to install.
+
+******************************************************************************
+2. Deployment
+
+Copy the accumulo tar file produced by mvn package from the src/assemble/target/
+directory to the desired destination, then untar it (e.g. 
+tar xvzf accumulo-1.5.0-SNAPSHOT-dist.tar.gz).
+
+If you are using the RPM, install the RPM on every machine that will run
+accumulo.
+
+******************************************************************************
+3. Upgrading from 1.3 to 1.4
+
+There are no steps for upgrading from 1.3 to 1.4.
+
+******************************************************************************
+4. Configuring
+
+Apache Accumulo has two prerequisites, hadoop and zookeeper. Zookeeper must be 
+at least version 3.3.0. Both of these must be installed and configured. 
+Zookeeper normally only allows for 10 connections from one computer.  On a 
+single-host install, this number is a little too low.  Add the following to the 
+$ZOOKEEPER_HOME/conf/zoo.cfg file:
+
+   maxClientCnxns=100
+
+Ensure you (or the some special hadoop user account) have accounts on all of
+the machines in the cluster and that hadoop and accumulo install files can be
+found in the same location on every machine in the cluster.  You will need to
+have password-less ssh set up as described in the hadoop documentation. 
+
+You will need to have hadoop installed and configured on your system.  Accumulo
+1.5.0-SNAPSHOT has been tested with hadoop version 0.20.2.  To avoid data loss,
+you must enable HDFS durable sync.  How you enable this depends on your version
+of Hadoop. Please consult the table below for information regarding your version.
+If you need to set the coniguration, please be sure to restart HDFS. See 
+ACCUMULO-623 for more information.
+
+HADOOP RELEASE          VERSION           SYNC NAME             DEFAULT
+Apache Hadoop           0.20.205          dfs.support.append    false
+Apache Hadoop            0.23.x           dfs.support.append    true
+Apache Hadoop             1.0.x           dfs.support.append    false
+Apache Hadoop             1.1.x           dfs.durable.sync      true
+Apache Hadoop          2.0.0-2.0.2        dfs.support.append    true
+Cloudera CDH             3u0-3u3             ????               true
+Cloudera CDH               3u4            dfs.support.append    true
+Hortonworks HDP           `1.0            dfs.support.append    false
+Hortonworks HDP           `1.1            dfs.support.append    false
+
+
+The example accumulo configuration files are placed in directories based on the 
+memory footprint for the accumulo processes.  If you are using native libraries
+for you tablet server in-memory map, then you can use the files in "native-standalone".
+If you get warnings about not being able to load the native libraries, you can
+use the configuration files in "standalone".
+
+For testing on a single computer, use a fairly small configuration:
+
+  $ cp conf/examples/512MB/native-standalone/* conf
+
+Please note that the footprints are for only the Accumulo system processes, so 
+ample space should be left for other processes like hadoop, zookeeper, and the 
+accumulo client code.  These directories must be at the same location on every 
+node in the cluster.
+
+If you are configuring a larger cluster you will need to create the configuration
+files yourself and propogate the changes to the $ACCUMULO_HOME/conf directories:
+
+   Create a "slaves" file in $ACCUMULO_HOME/conf/.  This is a list of machines
+   where tablet servers and loggers will run.
+
+   Create a "masters" file in $ACCUMULO_HOME/conf/.  This is a list of
+   machines where the master server will run. 
+
+   Create conf/accumulo-env.sh following the template of
+   example/3GB/native-standalone/accumulo-env.sh.  
+
+However you create your configuration files, you will need to set 
+JAVA_HOME, HADOOP_HOME, and ZOOKEEPER_HOME in conf/accumulo-env.sh
+
+Note that zookeeper client jar files must be installed on every machine, but 
+the server should not be run on every machine.
+
+Create the $ACCUMULO_LOG_DIR on every machine in the slaves file.
+
+* Note that you will be specifying the Java heap space in accumulo-env.sh.  
+You should make sure that the total heap space used for the accumulo tserver,
+logger and the hadoop datanode and tasktracker is less than the available
+memory on each slave node in the cluster.  On large clusters, it is recommended
+that the accumulo master, hadoop namenode, secondary namenode, and hadoop
+jobtracker all be run on separate machines to allow them to use more heap
+space.  If you are running these on the same machine on a small cluster, make
+sure their heap space settings fit within the available memory.  The zookeeper
+instances are also time sensitive and should be on machines that will not be
+heavily loaded, or over-subscribed for memory.
+
+Edit conf/accumulo-site.xml.  You must set the zookeeper servers in this
+file (instance.zookeeper.host).  Look at docs/config.html to see what
+additional variables you can modify and what the defaults are.
+
+It is advisable to change the instance secret (instance.secret) to some new
+value.  Also ensure that the accumulo-site.xml file is not readable by other
+users on the machine.
+
+Create the write-ahead log directory on all slaves.  The directory is set in 
+the accumulo-site.xml as the "logger.dir.walog" parameter.  It is a local 
+directory that will be used to log updates which will be used in the event of
+tablet server failure, so it is important that it have sufficient space and
+reliability.  It is possible to specify a comma-separated list of directories 
+to use for write-ahead logs, in which case each directory in the list must be
+created on all slaves.
+
+Synchronize your accumulo conf directory across the cluster.  As a precaution
+against mis-configured systems, servers using different configuration files
+will not communicate with the rest of the cluster.
+
+******************************************************************************
+5. Running Apache Accumulo
+
+Make sure hadoop is configured on all of the machines in the cluster, including
+access to a shared hdfs instance.  Make sure hdfs is running.
+
+Make sure zookeeper is configured and running on at least one machine in the
+cluster.
+
+Run "bin/accumulo init" to create the hdfs directory structure
+(hdfs:///accumulo/*) and initial zookeeper settings. This will also allow you
+to also configure the initial root password. Only do this once. 
+
+Start accumulo using the bin/start-all.sh script.
+
+Use the "bin/accumulo shell -u <username>" command to run an accumulo shell
+interpreter.  Within this interpreter, run "createtable <tablename>" to create
+a table, and run "table <tablename>" followed by "scan" to scan a table.
+
+In the example below a table is created, data is inserted, and the table is
+scanned.
+
+    $ ./bin/accumulo shell -u root
+    Enter current password for 'root'@'accumulo': ******
+
+    Shell - Apache Accumulo Interactive Shell
+    - 
+    - version: 1.5.0-SNAPSHOT
+    - instance name: accumulo
+    - instance id: f5947fe6-081e-41a8-9877-43730c4dfc6f
+    - 
+    - type 'help' for a list of available commands
+    - 
+    root@ac> createtable foo
+    root@ac foo> insert row1 colf1 colq1 val1
+    root@ac foo> insert row1 colf1 colq2 val2
+    root@ac foo> scan
+    row1 colf1:colq1 []    val1
+    row1 colf1:colq2 []    val2
+
+The example below start the shell, switches to table foo, and scans for a
+certain column.
+
+    $ ./bin/accumulo shell -u root
+    Enter current password for 'root'@'accumulo': ******
+
+    Shell - Apache Accumulo Interactive Shell
+    - 
+    - version: 1.5.0-SNAPSHOT
+    - instance name: accumulo
+    - instance id: f5947fe6-081e-41a8-9877-43730c4dfc6f
+    - 
+    - type 'help' for a list of available commands
+    - 
+    root@ac> table foo
+    root@ac foo> scan -c colf1:colq2
+    row1 colf1:colq2 []    val2
+
+
+If you are running on top of hdfs with kerberos enabled, then you need to do
+some extra work. First, create an Accumulo principal
+
+  kadmin.local -q "addprinc -randkey accumulo/<host.domain.name>"
+
+where <host.domain.name> is replaced by a fully qualified domain name. Export
+the principals to a keytab file. It is safer to create a unique keytab file for each
+server, but you can also glob them if you wish.
+
+  kadmin.local -q "xst -k accumulo.keytab -glob accumulo*"
+
+Place this file in $ACCUMULO_HOME/conf for every host. It should be owned by
+the accumulo user and chmodded to 400. Add the following to the accumulo-env.sh
+
+In the accumulo-site.xml file on each node, add settings for general.kerberos.keytab
+and general.kerberos.principal, where the keytab setting is the absolute path
+to the keytab file ($ACCUMULO_HOME is valid to use) and principal is set to
+accumulo/_HOST@<REALM>, where REALM is set to your kerberos realm. You may use
+_HOST in lieu of your individual host names.
+
+  <property>
+    <name>general.kerberos.keytab</name>
+    <value>$ACCUMULO_HOME/conf/accumulo.keytab</value>
+  </property>
+
+  <property>
+    <name>general.kerberos.principal</name>
+    <value>accumulo/_HOST@MYREALM</value>
+  </property> 
+
+You can then start up Accumulo as you would with the accumulo user, and it will
+automatically handle the kerberos keys needed to access hdfs.
+
+Please Note: You may have issues initializing Accumulo while running kerberos HDFS.
+You can resolve this by temporarily granting the accumulo user write access to the
+hdfs root directory, running init, and then revoking write permission in the root 
+directory (be sure to maintain access to the /accumulo directory).
+
+******************************************************************************
+6. Monitoring Apache Accumulo
+
+You can point your browser to the master host, on port 50095 to see the status
+of accumulo across the cluster.  You can even do this with the text-based
+browser "links":
+
+ $ links http://localhost:50095
+
+From this GUI, you can ensure that tablets are assigned, tables are online,
+tablet servers are up. You can monitor query and ingest rates across the
+cluster.
+
+******************************************************************************
+7. Stopping Apache Accumulo
+
+Do not kill the tabletservers or run bin/tdown.sh unless absolutely necessary.
+Recovery from a catastrophic loss of servers can take a long time. To shutdown
+cleanly, run "bin/stop-all.sh" and the master will orchestrate the shutdown of
+all the tablet servers.  Shutdown waits for all writes to finish, so it may
+take some time for particular configurations.  
+
+******************************************************************************
+8. Logging
+
+DEBUG and above are logged to the logs/ dir.  To modify this behavior change
+the scripts in conf/.  To change the logging dir, set ACCUMULO_LOG_DIR in
+conf/accumulo-env.sh.  Stdout and stderr of each accumulo process is
+redirected to the log dir.
+
+******************************************************************************
+9. API
+
+The public accumulo API is composed of everything in the 
+org.apache.accumulo.core.client package (excluding the 
+org.apache.accumulo.core.client.impl package) and the following classes from 
+org.apache.accumulo.core.data : Key, Mutation, Value, and Range.  To get
+started using accumulo review the example and the javadoc for the packages and
+classes mentioned above. 
+
+******************************************************************************
+10. Performance Tuning
+
+Apache Accumulo has exposed several configuration properties that can be 
+changed.  These properties and configuration management are described in detail 
+in docs/config.html.  While the default value is usually optimal, there are 
+cases where a change can increase query and ingest performance.
+
+Before changing a property from its default in a production system, you should 
+develop a good understanding of the property and consider creating a test to 
+prove the increased performance.
+
+******************************************************************************
