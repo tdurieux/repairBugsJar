@@ -1,0 +1,24 @@
+language: java
+sudo: required
+
+env:
+  matrix:
+  - COMMIT_ID=b007b22e
+  - COMMIT_ID=efef09b0
+
+script:
+- git clone --recursive https://github.com/tdurieux/bugs-dot-jar-dissection
+- cd script
+- python bugs-dot-jar.py checkout -p accumulo -i $COMMIT_ID
+- git clone https://github.com/Spirals-Team/maven-repair
+- cd maven-repair 
+- cd ../bugs/accumulo/$COMMIT_ID
+- mvn test -DtrimStackTrace=false
+- mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
+
+script
+mvn install
+
+
+jdk:
+- oraclejdk8
