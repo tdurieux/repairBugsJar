@@ -12,9 +12,7 @@ script:
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMIT_ID
 - git clone https://github.com/Spirals-Team/maven-repair
 - cd maven-repair 
-- cd ../bugs/accumulo/$COMMIT_ID
-- mvn test -DtrimStackTrace=false
-- mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
+- cd ../bugs/accumulo/$COMMIT_ID && mvn test -DtrimStackTrace=false && mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
 
 script
 mvn install
