@@ -11,4 +11,11 @@ env:
 before_script:
 - git clone https://github.com/Spirals-Team/maven-repair
 - cd maven-repair
-- pwd
+- mvn install
+
+script:
+- cd script
+- python bugs-dot-jar.py checkout -p accumulo -i $COMMIT_ID
+
+- cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMIT_ID && mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
+- cd /home/travis/build/plarentih/repairBugsJar 
