@@ -11,13 +11,4 @@ env:
 before_script:
 - git clone https://github.com/Spirals-Team/maven-repair
 - cd maven-repair
-- mvn install
-- git clone --recursive https://github.com/bugs-dot-jar/bugs-dot-jar.git
-
-script:
-- git clone --recursive https://github.com/tdurieux/bugs-dot-jar-dissection
-- mv -f ../bugs-dot-jar ../bugs-dot-jar-dissection/repositories
-- cd script
-- python bugs-dot-jar.py checkout -p accumulo -i $COMMIT_ID
-
-- cd ../bugs/accumulo/$COMMIT_ID && mvn test -DtrimStackTrace=false && mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
+- pwd
