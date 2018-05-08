@@ -14,7 +14,7 @@ before_script:
 - mvn install
 
 script:
-- cd script
+- cd /home/travis/build/plarentih/repairBugsJar/script
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMIT_ID
 
 - cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMIT_ID && mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
