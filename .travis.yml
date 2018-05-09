@@ -19,5 +19,5 @@ script:
 - cd /home/travis/build/plarentih/repairBugsJar/script
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMI
 	
-- cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMIT_ID && mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
+- cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMI && mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
 - cd /home/travis/build/plarentih/repairBugsJar
