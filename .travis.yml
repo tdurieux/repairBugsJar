@@ -9,7 +9,7 @@ env:
   matrix:
   - COMMI=b007b22e
   - COMMI=efef09b0
-	
+
 before_script:
 - git clone https://github.com/Spirals-Team/maven-repair
 - cd maven-repair
