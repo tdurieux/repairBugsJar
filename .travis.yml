@@ -26,7 +26,7 @@ script:
 - mvn -X fr.inria.gforge.spirals:repair-maven-plugin:nopol
 - d=/home/travis/build/plarentih/repairBugsJar/results/accumulo/$COMMI/nopol
 - test -d "$d" || mkdir -p "$d" && cp -Rf /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMI/target/nopol/output.json "$d"
-- git add /home/travis/build/plarentih/repairBugsJar/results/accumulo/$COMMI/nopol/
+- git add /home/travis/build/plarentih/repairBugsJar/results/accumulo/$COMMI/nopol/output.json
 - git commit -m "results for bug commit $COMMI"
 - git pull --rebase
 - git push
