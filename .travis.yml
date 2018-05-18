@@ -2,6 +2,10 @@ language: java
 
 sudo: required
 
+cache:
+  directories:
+    - ~/.m2
+
 jdk:
 - oraclejdk8
 
@@ -20,4 +24,6 @@ script:
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMI
 - cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMI
 - mvn -X fr.inria.gforge.spirals:repair-maven-plugin:nopol
+- d=/home/travis/build/plarentih/repairBugsJar/results/accumulo/$COMMI/nopol
+- test -d "$d" || mkdir -p "$d" && cp -Rf target/nopol/output.json "$d"
 - cd /home/travis/build/plarentih/repairBugsJar
