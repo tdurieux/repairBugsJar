@@ -27,5 +27,6 @@ script:
 - d=/home/travis/build/plarentih/repairBugsJar/results/accumulo/$COMMI/nopol
 - test -d "$d" || mkdir -p "$d" && cp -Rf /home/travis/build/plarentih/repairBugsJar/results/accumulo/$COMMI/nopol/output.json "$d"
 - git commit -m "update results"
+- git pull --rebase
 - git push
 - cd /home/travis/build/plarentih/repairBugsJar
