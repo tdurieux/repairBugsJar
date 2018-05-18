@@ -25,4 +25,4 @@ script:
 - cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMI
 - mvn -X fr.inria.gforge.spirals:repair-maven-plugin:nopol
 - cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMI/target/nopol
-- ls -al
+- ls
