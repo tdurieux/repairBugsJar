@@ -23,7 +23,7 @@ script:
 - cd ../script
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMI
 - cd ../bugs/accumulo/$COMMI
-- mvn -X test -DtrimStackTrace=false
+- mvn -X test --fail-never -DtrimStackTrace=false
 - mvn -X fr.inria.gforge.spirals:repair-maven-plugin:1.5-SNAPSHOT:nopol
 
 after_script:
