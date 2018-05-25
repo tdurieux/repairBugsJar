@@ -20,8 +20,11 @@ before_script:
 - mvn install
 
 script:
-- cd /home/travis/build/plarentih/repairBugsJar/script
+- cd ../script
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMI
-- cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMI
+- cd ../bugs/accumulo/$COMMI
 - mvn -X test -DtrimStackTrace=false
 - mvn -X fr.inria.gforge.spirals:repair-maven-plugin:nopol
+
+after_script:
+  - rm -rf ~/.m2/repository/fr/inria/gforge/spirals/repair-maven-plugin/
