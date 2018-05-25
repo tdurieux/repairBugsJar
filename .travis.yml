@@ -17,14 +17,14 @@ env:
 before_script:
 - git clone https://github.com/Spirals-Team/maven-repair
 - cd maven-repair
-- mvn install
+- mvn install -Dmaven.test.skip=true
 
 script:
 - cd ../script
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMI
 - cd ../bugs/accumulo/$COMMI
 - mvn -X test -DtrimStackTrace=false
-- mvn -X fr.inria.gforge.spirals:repair-maven-plugin:nopol
+- mvn -X fr.inria.gforge.spirals:repair-maven-plugin:1.5-SNAPSHOT:nopol
 
 after_script:
   - rm -rf ~/.m2/repository/fr/inria/gforge/spirals/repair-maven-plugin/
