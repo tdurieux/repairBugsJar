@@ -23,5 +23,5 @@ script:
 - cd /home/travis/build/plarentih/repairBugsJar/script
 - python bugs-dot-jar.py checkout -p accumulo -i $COMMI
 - cd /home/travis/build/plarentih/repairBugsJar/bugs/accumulo/$COMMI
-- mvn -X test
-- mvn -X fr.inria.gforge.spirals:repair-maven-plugin:nopol
+- mvn test -DtrimStackTrace=false
+- mvn fr.inria.gforge.spirals:repair-maven-plugin:nopol
